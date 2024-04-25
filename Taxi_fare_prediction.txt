@@ -1,0 +1,222 @@
+TaxiFare Project
+
+
+#Basic and most important libraries
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+#Classifiers
+from sklearn.ensemble import AdaBoostClassifier , GradientBoostingClassifier,RandomForestClassifier
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+
+#Model evaluation tools
+from sklearn.metrics import classification_report , accuracy_score , confusion_matrix
+from sklearn.metrics import f1_score
+from sklearn.model_selection import cross_val_score
+
+#Data processing functions
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+le = LabelEncoder()
+
+import warnings
+warnings.filterwarnings("ignore")
+data = pd.read_csv("https://raw.githubusercontent.com/Premalatha-success/Datasets/main/TaxiFare.csv")
+data.head()
+data.shape
+data.dtypes
+plt.figure(figsize=(20,200))
+sns.countplot(x="no_of_passenger",hue="amount",data=data)
+correlation_mat=data.corr()
+sns.heatmap(correlation_mat,annot=True,linewidths=.5,cmap="YlGnBu")
+sns.pairplot(data)
+plt.show()
+data.describe()
+data.info()
+data.isnull().sum()
+plt.figure(figsize=(10,6))
+sns.heatmap(data.isnull(),yticklabels=False)
+
+print(data["unique_id"].value_counts())
+print(data["amount"].value_counts())
+print(data["date_time_of_pickup"].value_counts())
+print(data["longitude_of_pickup"].value_counts())
+print(data["latitude_of_pickup"].value_counts())
+print(data["longitude_of_dropoff"].value_counts())
+print(data["latitude_of_dropoff"].value_counts())
+print(data["no_of_passenger"].value_counts())
+
+#filling all Nan values with mode of respective variable
+data["unique_id"].fillna(data["unique_id"].mode()[0],inplace=True)
+data["date_time_of_pickup"].fillna(data["date_time_of_pickup"].mode()[0],inplace=True)
+data["longitude_of_pickup"].fillna(data["longitude_of_pickup"].mode()[0],inplace=True)
+data["latitude_of_pickup"].fillna(data["latitude_of_pickup"].mode()[0],inplace=True)
+data["longitude_of_dropoff"].fillna(data["longitude_of_dropoff"].mode()[0],inplace=True)
+data["latitude_of_dropoff"].fillna(data["latitude_of_dropoff"].mode()[0],inplace=True)
+
+data["no_of_passenger"].fillna(data["no_of_passenger"].median(),inplace=True)
+
+print(data.isnull().sum())
+
+#Heat map for null values
+plt.figure(figsize=(10,6))
+sns.heatmap(data.isnull())
+data.head(5)
+
+data["date_time_of_pickup"] = le.fit_transform(data["date_time_of_pickup"])
+data["longitude_of_pickup"] = le.fit_transform(data["longitude_of_pickup"])
+data["latitude_of_pickup"] = le.fit_transform(data["latitude_of_pickup"])
+data["longitude_of_dropoff"] = le.fit_transform(data["longitude_of_dropoff"])
+data["latitude_of_dropoff"] = le.fit_transform(data["latitude_of_dropoff"])
+data["amount"] = le.fit_transform(data["amount"])
+
+data.head(5)
+#Dividing data into Input X variables and Target Y variable
+X = data.drop(["amount","unique_id"],axis=1)
+y = data["amount"]
+X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.3,random_state=0)
+
+####LINEAR REGRESSION
+model_1 = LinearRegression()
+model_1.fit(X_train,y_train)
+model_1.score(X_train,y_train)
+model_1.score(X_test,y_test)
+
+####LOGISTIC REGRESSION MODEL
+model = LogisticRegression(solver="liblinear")
+model.fit(X_train,y_train)
+model.score(X_train,y_train)
+model.score(X_test,y_test)
+####DECISION TREE MODEL
+
+dtree=DecisionTreeClassifier(criterion="gini")
+
+dtree.fit(X_train,y_train)
+
+dtree.score(X_train,y_train)
+
+dtree.score(X_test,y_test)
+
+dTreeR = DecisionTreeClassifier(criterion = 'gini',max_depth = 3,random_state=0)
+
+dTreeR.fit(X_train,y_train)
+
+print(dTreeR.score(X_train,y_train))
+
+y_predict = dTreeR.predict(X_test)
+
+print(dTreeR.score(X_test, y_test))
+
+from sklearn import metrics
+
+cm=metrics.confusion_matrix(y_test,y_predict,labels=[0,1])
+
+df_cm = pd.DataFrame(cm, index = [i for i in["No","Yes"]],
+                     columns = [i for i in["No","Yes"]])
+plt.figure(figsize = (7,5))
+
+sns.heatmap(df_cm, annot=True ,fmt='g')
+
+from sklearn.ensemble import BaggingClassifier
+
+bgcl = BaggingClassifier( n_estimators=150,base_estimator=dTreeR,random_state=0)
+
+bgcl = bgcl.fit(X_train,y_train)
+
+print(bgcl.score(X_train,y_train))
+
+y_predict = bgcl.predict(X_test)
+print(bgcl.score(X_test,y_test))
+
+from sklearn import metrics
+
+cm=metrics.confusion_matrix(y_test,y_predict,labels=[0,1])
+
+df_cm = pd.DataFrame(cm, index = [i for i in["No","Yes"]],
+                     columns = [i for i in["No","Yes"]])
+
+plt.figure(figsize = (7,5))
+
+sns.heatmap(df_cm, annot=True ,fmt='g')
+
+from sklearn.ensemble import AdaBoostClassifier
+
+abcl = AdaBoostClassifier( n_estimators=120,random_state=0)
+
+abcl = abcl.fit(X_train,y_train)
+
+print(abcl.score(X_train,y_train))
+
+y_predict = abcl.predict(X_test)
+
+print(abcl.score(X_test,y_test))
+
+from sklearn import metrics
+
+cm=metrics.confusion_matrix(y_test,y_predict,labels=[0,1])
+
+df_cm = pd.DataFrame(cm, index = [i for i in["No","Yes"]],
+                     columns = [i for i in["No","Yes"]])
+
+plt.figure(figsize = (7,5))
+
+sns.heatmap(df_cm, annot=True ,fmt='g')
+
+#kernal crashing while executing Gradient Boosting Classifier
+
+from sklearn.ensemble import GradientBoostingClassifier
+
+gbcl = GradientBoostingClassifier(n_estimators=200,random_state=0)
+
+gbcl = gbcl.fit(X_train,y_train)
+
+print(gbcl.score(X_train,y_train))
+
+y_predict = gbcl.predict(X_test)
+
+print(gbcl.score(X_test,y_test))
+
+cm=metrics.confusion_matrix(y_test,y_predict,labels=[0,1])
+
+df_cm = pd.DataFrame(cm, index = [i for i in["No","Yes"]],
+                    columns = [i for i in["No","Yes"]])
+
+plt.figure(figsize = (7,5))
+
+sns.heatmap(df_cm, annot=True ,fmt='g')
+
+from sklearn.ensemble import RandomForestClassifier
+
+rfcl = RandomForestClassifier(n_estimators=160,random_state=0,max_features=3)
+
+rfcl = rfcl.fit(X_train,y_train)
+
+print(rfcl.score(X_train,y_train))
+
+y_predict = rfcl.predict(X_test)
+
+print(rfcl.score(X_test,y_test))
+
+cm=metrics.confusion_matrix(y_test,y_predict,labels=[0,1])
+
+df_cm = pd.DataFrame(cm, index = [i for i in["No","Yes"]],
+                     columns = [i for i in["No","Yes"]])
+
+plt.figure(figsize = (7,5))
+
+sns.heatmap(df_cm, annot=True ,fmt='g')
+
+from scipy.stats import zscore
+
+XScaled = X.apply(zscore)#convert all attributes to Z scale
+
+XScaled.describe()
+
+NNH = KNeighborsClassifier(n_neighbors= 5, weights = 'distance',metric='euclidean')
+
+NNH.fit(XScaled,y)
